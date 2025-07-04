@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Basic.cpp">
+    <ClCompile Include="Leap.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
