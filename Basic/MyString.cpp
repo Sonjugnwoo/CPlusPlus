@@ -22,6 +22,13 @@ public:
         str = new char[len + 1];
         std::strcpy(str, c);
     }
+    string(const string& c)
+    {
+        len = c.len;
+        for (int i = 0; i != len; i++)
+             str[i] = c.str[i];
+        
+    }
     ~string()
     {
         delete[] str;
