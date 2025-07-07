@@ -51,20 +51,30 @@ public:
 	int MemoryCapacity() const;                         // capacity 반환
 	void Reserve(int size);                             // capacity 예약
 	char at(int i) const;                               // i번째 문자 반환
+
 	int Find(int find_from, const MyString& str_2) const; // 부분 문자열 찾기
 	int Find(int find_from, const char* str_2) const;
 	int Find(int find_from, const char c) const;
-	int BoyerMooreFind(int find_from, const MyString& str_2) const;
+
+	int BoyerMooreFind(int find_from, const MyString& str_2) const;	//Boyer-Moore 알고리즘 사용 문자열 찾기 
 	int BoyerMooreFind(int find_from, const char* str_2) const;
 	int BoyerMooreFind(int find_from, const char c) const;
+
 	int Compare(const MyString& str_2) const;           // 문자열 비교
+
+	bool operator==(const MyString& c)	 const;			// == 연산자 오버로딩
 
 	MyString& Assign(const MyString& str_2);            // 대입
 	MyString& Assign(const char* str_2);
+
 	MyString& Insert(int loc, const MyString& str_2);   // 삽입
 	MyString& Insert(int loc, const char* str_2);
 	MyString& Insert(int loc, char c);
+
 	MyString& Erase(int loc, int num);                  // 삭제
+
+	MyString operator+(const MyString& c) const;		// + 연산자 오버로딩
+	MyString& operator=(const MyString& c);				// = 연산자 오버로딩
 };
 
 // 문자열 출력
@@ -261,6 +271,12 @@ MyString& MyString::Assign(const char* str_2)
 	return *this;
 }
 
+// = 연산자 오버로딩 
+MyString& MyString::operator=(const MyString& c)
+{
+	return Assign(c);
+}
+
 // 삽입 (MyString)
 MyString& MyString::Insert(int loc, const MyString& str_2)
 {
@@ -323,6 +339,14 @@ MyString& MyString::Insert(int loc, char c)
 	return Insert(loc, temp);
 }
 
+// + 연산자 오버로딩 (새 객체 반환)
+MyString MyString::operator+(const MyString& c) const
+{
+	MyString result(*this);                // 자기 자신 복사
+	result.Insert(result.len, c);          // 끝에 c 삽입
+	return result;                         // 새로운 객체 반환
+}
+
 // 삭제 (loc부터 num개 문자 삭제)
 MyString& MyString::Erase(int loc, int num)
 {
@@ -340,6 +364,12 @@ MyString& MyString::Erase(int loc, int num)
 	len -= num;
 
 	return *this;
+}
+
+// == 연산자 오버로딩
+bool MyString::operator==(const MyString& c) const
+{
+	return !Compare(c);
 }
 
 // ================== 테스트용 main 함수 ==================
