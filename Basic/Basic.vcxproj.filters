@@ -33,5 +33,11 @@
     <ClCompile Include="Complex.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="N-Arr.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Iterator.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
