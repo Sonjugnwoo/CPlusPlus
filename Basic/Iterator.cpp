@@ -18,6 +18,7 @@ namespace MyArray
 			void* next;
 		};
 		Address* top;
+	public:
 
 		class Iterator {
 			int* loc;     // 현재 이터레이터가 가리키는 다차원 배열의 인덱스 배열 (예: [i, j, k])
@@ -69,32 +70,44 @@ namespace MyArray
 
 				return (*this); // 증가된 이터레이터 반환
 			}
-			Iterator& operator=(const Iterator& itr) {
-				arr = itr.arr;
-				loc = new int[itr.arr->dim];
 
+			// 대입 연산자: 다른 Iterator 객체의 값을 현재 객체에 복사
+			Iterator& operator=(const Iterator& itr) {
+
+				arr = itr.arr;					// 대상 배열 포인터 복사
+				loc = new int[itr.arr->dim];	// 인덱스 배열 새로 할당
+
+				// 각 차원의 인덱스 값 복사
 				for (int i = 0; i != arr->dim; i++)
 					loc[i] = itr.loc[i];
 
-				return (*this);
-			}
+				return (*this);	 // 자기 자신 반환
+			}	
 
+			// 후위 증가 연산자: 현재 이터레이터 상태를 저장한 후, 한 칸 이동
 			Iterator operator++(int) {
-				Iterator itr(*this);
-				++(*this);
-				return itr;
+				Iterator itr(*this);	// 현재 상태를 복사
+				++(*this);				// 전위 증가(한 칸 이동)
+				return itr;				// 이동 전 상태 반환
 			}
 
+			// 비교 연산자: 두 이터레이터가 서로 다른 위치를 가리키는지 비교
 			bool operator!= (const Iterator& itr) {
+				// 배열 차원 수가 다르면 다른 배열이므로 true 반환
 				if (itr.arr->dim != arr->dim) return true;
-				for (int i = 0; i != arr->dim; i++)
-					if (itr.arr->dim != loc[i]) return true;
 
-				return false;
+				// 각 차원의 인덱스가 다르면 true 반환
+				for (int i = 0; i != arr->dim; i++)
+					if (itr.loc[i] != loc[i]) return true;
+
+				return false; // 모두 같으면 false(같은 위치)
 			}
+
+			// 역참조 연산자: 이터레이터가 가리키는 배열 요소(Int 프록시 객체) 반환
 			Int operator*();
 		};
 		friend Iterator;
+
 		Array(int dim, int* arr_size) : dim(dim)	// 차원 수 와 각 차원의 크기 정보 
 		{
 			size = new int[dim];	//차원의 크기를 받을 int 배열 동적 할당
@@ -120,15 +133,63 @@ namespace MyArray
 			InitalizeAddress(top);
 			CopyAddress(top, arr.top);
 		}
-		void InitalizeAddress(Address* cur);
-		void CopyAddress(Address* dst, Address* src);
-		void DeleteAddress(Address* cur);
 
-		// Array 클래스의 operator[]: 첫 번째 차원 인덱싱을 처리하여 Int 프록시 객체를 반환
-		Int operator[](const int idx) {
-			// level=1(첫 번째 차원), 시작 주소는 top, 현재 Array 객체(this)를 넘김
-			return Int(idx, 1, static_cast<void*>(top), this);
+		//Address 초기화 함수 
+		void InitalizeAddress(Address* cur) {
+			if (!cur) return;					//cur 이 NULL 일때 예외 처리 
+
+			if (cur->level == dim - 1)			// 종료 조건 (최하위 차원에 도달 했음)
+			{
+				cur->next = new int[size[cur->level]];	// 실제 데이터를 저장할 int 배열 동적 할당
+				return;
+			}
+
+			cur->next = new Address[size[cur->level]];	// 현재 노드(cur)의 다음 단계 Address 객체들을 위한 메모리(배열) 동적 할당
+
+			for (int i = 0; i != size[cur->level]; i++)	// 현재 단계(cur->level)의 다음 단계 Address 객체들을 순회 (깊이 우선 탐색 )
+			{
+				// (static_cast<Address*>(cur->next) + i): i번째 Address 객체의 주소
+				(static_cast<Address*>(cur->next) + i)->level = cur->level + 1;	 // i번째 Address 객체의 level을 현재보다 1 크게 설정
+				InitalizeAddress(static_cast<Address*>(cur->next) + i);
+			}
 		}
+
+		// Address 구조체 트리를 재귀적으로 복사하는 함수
+		void CopyAddress(Address* dst, Address* src) {
+			// 만약 현재 레벨이 마지막 차원(실제 데이터 배열)이라면
+			if (dst->level == dim - 1)
+			{
+				// 해당 차원의 크기만큼 반복하면서 int 배열의 값을 복사
+				for (int i = 0; i < size[dst->level]; ++i)
+					static_cast<int*>(dst->next)[i] = static_cast<int*>(src->next)[i];
+				return; // 복사 완료 후 함수 종료
+			}
+
+			// 마지막 차원이 아니라면(아직 Address 트리의 중간 단계라면)
+			for (int i = 0; i != size[dst->level]; i++)
+			{
+				// dst->next와 src->next를 Address* 배열로 보고, i번째 자식 Address를 얻음
+				Address* new_dst = static_cast<Address*>(dst->next) + i;
+				Address* new_src = static_cast<Address*>(src->next) + i;
+				// 재귀적으로 하위 Address 트리도 복사
+				CopyAddress(new_dst, new_src);
+			}
+		}
+
+		// Address 구조체(또는 클래스)의 동적 메모리 해제 함수
+		void DeleteAddress(Address* cur) {
+			if (!cur) return;	//cur 이 NULL 일때 예외 처리 
+
+			// 아직 마지막 차원이 아니면, 자식 Address 객체들에 대해 재귀적으로 DeleteAddress 호출 
+			// (이 과정에서 함수 호출이 스택처럼 쌓임)
+			for (int i = 0; cur->level < dim - 1 && i < size[cur->level]; i++)
+				DeleteAddress(static_cast<Address*>(cur->next) + i);
+
+			// 현재 노드의 next(동적 할당된 배열 또는 int 배열) 메모리 해제
+			delete[] cur->next;
+		}
+
+		Int operator[](const int idx);
 		~Array()
 		{
 			DeleteAddress(top);
@@ -147,7 +208,7 @@ namespace MyArray
 		}
 
 		// 배열의 끝 위치(마지막 다음 인덱스)를 가리키는 이터레이터 반환
-		Iterator end() {
+		Iterator End() {
 			int* arr = new int[dim];    // 차원 수만큼 인덱스 배열 동적 할당
 			arr[0] = size[0];           // 첫 번째 차원의 인덱스를 size[0]으로 설정 (end 조건)
 			for (int i = 1; i != dim; i++)
@@ -210,79 +271,54 @@ namespace MyArray
 	
 }
 
-//[네임스페이스]::[외부클래스]::[내부클래스]::함수이름
-//Address 초기화 함수 
-void MyArray::Array::InitalizeAddress(Address* cur)
+// Array 클래스의 operator[]: 첫 번째 차원 인덱싱을 처리하여 Int 프록시 객체를 반환
+MyArray::Int MyArray::Array::operator[](const int idx)
 {
-	if (!cur) return;					//cur 이 NULL 일때 예외 처리 
-
-	if (cur->level == dim - 1)			// 종료 조건 (최하위 차원에 도달 했음)
-	{
-		cur->next = new int[size[cur->level]];	// 실제 데이터를 저장할 int 배열 동적 할당
-		return;
-	}
-
-	cur->next = new Address[size[cur->level]];	// 현재 노드(cur)의 다음 단계 Address 객체들을 위한 메모리(배열) 동적 할당
-
-	for (int i = 0; i != size[cur->level]; i++)	// 현재 단계(cur->level)의 다음 단계 Address 객체들을 순회 (깊이 우선 탐색 )
-	{
-		// (static_cast<Address*>(cur->next) + i): i번째 Address 객체의 주소
-		(static_cast<Address*>(cur->next) + i)->level = cur->level + 1;	 // i번째 Address 객체의 level을 현재보다 1 크게 설정
-		InitalizeAddress(static_cast<Address*>(cur->next) + i);
-	}
+	// level=1(첫 번째 차원), 시작 주소는 top, 현재 Array 객체(this)를 넘김
+	return Int(idx, 1, static_cast<void*>(top), this);
 }
 
-// Address 구조체 트리를 재귀적으로 복사하는 함수
-void MyArray::Array::CopyAddress(Address* dst, Address* src)
-{
-	// 만약 현재 레벨이 마지막 차원(실제 데이터 배열)이라면
-	if (dst->level == dim - 1)
-	{
-		// 해당 차원의 크기만큼 반복하면서 int 배열의 값을 복사
-		for (int i = 0; i < size[dst->level]; ++i)
-			static_cast<int*>(dst->next)[i] = static_cast<int*>(src->next)[i];
-		return; // 복사 완료 후 함수 종료
-	}
+// 이터레이터가 가리키는 다차원 배열의 실제 원소(Int 프록시 객체)를 반환하는 함수
+MyArray::Int MyArray::Array::Iterator::operator*() {
+	//첫 번째 차원 인덱스로 Int 프록시 객체를 얻음 (예: arr[loc[0]])
+	Int start = arr->operator[](loc[0]);
 
-	// 마지막 차원이 아니라면(아직 Address 트리의 중간 단계라면)
-	for (int i = 0; i != size[dst->level]; i++)
-	{
-		// dst->next와 src->next를 Address* 배열로 보고, i번째 자식 Address를 얻음
-		Address* new_dst = static_cast<Address*>(dst->next) + i;
-		Address* new_src = static_cast<Address*>(src->next) + i;
-		// 재귀적으로 하위 Address 트리도 복사
-		CopyAddress(new_dst, new_src);
-	}
+	// 두 번째 차원부터 마지막 차원까지 반복해서 인덱싱
+	// 예: start = start[loc[1]], start = start[loc[2]], ...
+	for (int i = 1; i <= arr->dim - 1; i++)
+		start = start.operator[](loc[i]);
+
+	// 모든 차원의 인덱싱이 끝나면, 해당 위치의 Int(프록시) 객체를 반환
+	return start;
 }
-
-// Address 구조체(또는 클래스)의 동적 메모리 해제 함수
-void MyArray::Array::DeleteAddress(Address* cur)
-{
-	if (!cur) return;	//cur 이 NULL 일때 예외 처리 
-
-	// 아직 마지막 차원이 아니면, 자식 Address 객체들에 대해 재귀적으로 DeleteAddress 호출 
-	// (이 과정에서 함수 호출이 스택처럼 쌓임)
-	for (int i = 0; cur->level < dim - 1 && i < size[cur->level]; i++)
-		DeleteAddress(static_cast<Address*>(cur->next) + i);
-
-	// 현재 노드의 next(동적 할당된 배열 또는 int 배열) 메모리 해제
-	delete[] cur->next;
-}
-
-
-
 
 int main() {
+	// 3차원 배열의 각 차원 크기 설정 (2 x 3 x 4 배열)
 	int size[] = { 2, 3, 4 };
-	MyArray::Array arr(3, size);
+	MyArray::Array arr(3, size); // 3차원 배열 객체 생성
 
+	// 이터레이터를 이용해 배열 전체에 0~23까지 값을 차례대로 대입
+	MyArray::Array::Iterator itr = arr.Begin(); // 시작 이터레이터
+	for (int i = 0; itr != arr.End(); itr++, i++)
+		(*itr) = i; // 배열의 각 원소에 i값(0,1,2,...,23) 저장
+
+
+	// 배열 전체를 이터레이터로 순회하며 값 출력
+	for (itr = arr.Begin(); itr != arr.End(); itr++)
+		std::cout << *itr << std::endl; // 0~23까지 한 줄씩 출력
+
+	// 3중 for문으로 각 원소 값을 (i+1)*(j+1)*(k+1) + 기존 값으로 갱신
 	for (int i = 0; i < 2; i++) {
 		for (int j = 0; j < 3; j++) {
 			for (int k = 0; k < 4; k++) {
-				arr[i][j][k] = (i + 1) * (j + 1) * (k + 1);
+				arr[i][j][k] = (i + 1) * (j + 1) * (k + 1) + arr[i][j][k];
+				// 예: arr[0][0][0] = 1*1*1 + 0 = 1
+				//     arr[1][2][3] = 2*3*4 + 23 = 24 + 23 = 47
 			}
 		}
 	}
+
+	// 갱신된 배열을 3중 for문으로 출력 (인덱스와 값 함께)
 	for (int i = 0; i < 2; i++) {
 		for (int j = 0; j < 3; j++) {
 			for (int k = 0; k < 4; k++) {
