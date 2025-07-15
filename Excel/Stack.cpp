@@ -41,4 +41,34 @@ namespace Excel {
             delete prev;
         }
     }
+    /*----------NumStack----------*/
+    NumStack::NumStack() : start(NULL, 0) {
+        current = &start;
+    }
+    void NumStack::push(double data) {
+        Node* node = new Node(current, data);
+        current = node;
+    }
+    double NumStack::pop() {
+        if (current == &start) return 0;
+        double temp = current->data;
+        Node* prev = current;
+        current = current->prev;
+        delete prev;
+        return temp;
+    }
+    double NumStack::peek() {
+        if (current == &start) return 0;
+        return current->data;
+    }
+    bool NumStack::is_empty() {
+        return current == &start;
+    }
+    NumStack::~NumStack() {
+        while (current != &start) {
+            Node* prev = current;
+            current = current->prev;
+            delete prev;
+        }
+    }
 }

@@ -1,8 +1,8 @@
 #include "vector.h"
 
 namespace Excel {
-	// 생성자: capacity 크기의 문자열 배열을 동적 할당, 초기 길이는 0
-	Vector::Vector(int n) : data(new std::string[n]), capacity(n), length(0) {}
+    // 생성자: capacity 크기의 문자열 배열을 동적 할당, 초기 길이는 0
+    Vector::Vector(int n) : data(new std::string[n]), capacity(n), length(0) {}
 
     // push_back: 배열 끝에 문자열 추가, 공간 부족 시 2배로 확장
     void Vector::push_back(std::string str) {

@@ -15,35 +15,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Leap.cpp">
+    <ClCompile Include="Excel.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Math.cpp">
+    <ClCompile Include="Vector.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="String.cpp">
+    <ClCompile Include="Stack.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="MyString.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="MyString2.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Complex.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="N-Arr.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Iterator.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Inheritance.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Polymorphism.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Vector.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Stack.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
