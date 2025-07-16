@@ -1,7 +1,7 @@
 ﻿#include <string>
 #include <iostream>
-#include "stack.h"
-#include "vector.h"
+#include "Stack.h"
+#include "Vector.h"
 
 class Table; // 전방 선언
 

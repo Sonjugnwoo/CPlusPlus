@@ -9,7 +9,7 @@ namespace Excel {
         std::string* data;   // 동적 문자열 배열의 시작 주소
         int capacity;        // 현재 할당된 배열의 크기(최대 저장 가능 개수)
         int length;          // 실제 저장된 원소 개수
-
+     
     public:
         // 생성자: n개의 공간을 가진 동적 배열 생성 (기본값 1)
         Vector(int n = 1);
