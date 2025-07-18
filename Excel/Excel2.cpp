@@ -1,5 +1,7 @@
 #include <string>
 #include <iostream>
+#include <map>
+#include <set>
 #include "Stack.h"
 #include "Vector.h"
 
@@ -15,10 +17,9 @@ protected:
 
 public:
     virtual std::string stringify() = 0;  // 해당 셀값 문자열 변환 
-    virtual int to_numeric() = 0;  // 해당 셀값 문자열 변환
+    virtual int to_numeric(std::set<std::string>& /*visited*/) = 0;
+    virtual int to_numeric() { std::set<std::string> v; return to_numeric(v); }
     Cell(Table* table,  int x, int y) : table(table), x(x), y(y) {}
-
-
 };
 
 // 문자열을 저장하는 셀 클래스
@@ -30,7 +31,7 @@ public:
     std::string stringify()  { return data; }
 
     // 문자열 셀은 숫자 변환이 의미 없으므로 0을 반환
-    int to_numeric() { return 0; }
+    int to_numeric(std::set<std::string>&) override { return 0; }
 
     // 생성자: table, 좌표(x, y), 데이터(data)를 받아 초기화
     // 멤버 초기화 리스트를 사용해서 data와 부모 클래스(Cell) 생성자를 호출
@@ -48,8 +49,7 @@ public:
     std::string stringify()  { return std::to_string(data); }
 
     // 숫자 셀의 숫자값을 반환
-    int to_numeric() { return data; }
-
+    int to_numeric(std::set<std::string>&) override { return data; }
     // 생성자: table, 좌표(x, y), 데이터(data)를 받아 초기화
     // 멤버 초기화 리스트를 사용해서 data와 부모 클래스(Cell) 생성자를 호출
     NumCell(Table* table, int data, int x, int y)
@@ -77,7 +77,7 @@ public:
     }
 
     // 저장된 날짜(time_t)를 정수로 반환하는 함수(예: 비교/계산용)
-    int to_numeric() { return static_cast<int>(data); }
+    int to_numeric(std::set<std::string>&) override { return static_cast<int>(data); }
 
     // 생성자: Cell 클래스를 상속받으므로 부모 생성자도 호출
     // str은 항상 "yyyy-mm-dd" 형태의 날짜 문자열임을 가정
@@ -108,7 +108,7 @@ protected:
     int rows, cols;         // 행, 열 개수
     Cell*** data_base;      // 2차원 배열 (이중 포인터)
 public:
-
+   
     // 생성자: 2차원 배열 동적 할당 및 nullptr로 초기화
     Table(int rows, int cols) : rows(rows), cols(cols) {
         data_base = new Cell * *[rows];
@@ -139,17 +139,36 @@ public:
         data_base[row][col] = c;
     }
 
-    // 문자열 셀 주소("A1", "B2" 등)를 정수로 변환하여, 해당 셀의 숫자 값을 반환
+    // 실질적 내부 재귀 호출용
+    int to_numeric(const std::string& str, std::set<std::string>& visited) {
+        int row = atoi(str.c_str() + 1) - 1; // ======= 행 인덱스(숫자-1)
+        int col = str[0] - 'A';              // ======= 열 인덱스(문자)
+
+        // "A1" → 변환
+        std::string cell_addr = str; // 주소 문자열 기록 (예: "A1")
+
+        // 순환 참조 체크
+        if (visited.count(cell_addr)) { //만약 방문 경로상 이미 이 셀이 있으면 에러
+            std::cerr << "순환 참조 감지: " << cell_addr << std::endl;
+            return 0;
+        }
+        visited.insert(cell_addr);  //이번 셀 주소를 방문 경로에 추가 (재귀 깊이 따라 계속 누적)
+
+        //실제 데이터 범위 내 & 셀이 존재하면
+        int result = 0;
+        if (row < rows && col < cols && data_base[row][col]) {
+            result = data_base[row][col]->to_numeric(visited);
+        }
+        visited.erase(cell_addr); // 평가 끝나면 빼줌
+
+        return result;
+    }
+
+    // 외부에서 호출할 때(순환경로 없는 기본 버전)
+    // 내부에서 사용할 set을 새로 만들고 to_numeric(str, set&) 호출
     int to_numeric(const std::string& str) {
-        int row = str[0] - 'A';                     // 첫 문자에서 행 인덱스 구함 ('A' = 0, 'B' = 1, ...)
-        int col = atoi(str.c_str() + 1) - 1;        // 나머지 숫자 부분에서 열 인덱스 구함 (1-based → 0-based 보정)
-
-        // 유효한 범위이고 셀이 존재하면 to_numeric 실행
-        if (row < rows && col < cols && data_base[row][col])
-            return data_base[row][col]->to_numeric();
-
-        // 셀이 없거나 범위 밖이면 0 반환
-        return 0;
+        std::set<std::string> visited;
+        return to_numeric(str, visited);
     }
 
     // 행, 열 인덱스를 받아 해당 셀의 숫자 값을 반환
@@ -219,15 +238,26 @@ class ExprCell : public Cell {
         data.push_back(')');     // 수식의 맨 뒤에 ')'를 추가합니다
 
         for (int i = 0; i < data.length(); ) { // i 증가를 분기에서 따로 제어
-            //  셀 참조(A1, B2 ...) : 항상 두 글자라고 가정 (ex: "B2")
             if (isalpha(data[i])) {
-                exp_vec.push_back(data.substr(i, 2)); // 두 글자 셀 참조 토큰 추출
-                i += 2; // 두 글자를 한 번에 처리
+                int idx = 0;
+                // 연속된 알파벳(열) 부분 파악 (예: "AB" in "AB12")
+                while (isalpha(data[i + idx]))  idx++;
+                // 연속된 숫자(행) 부분 파악 (예: "12" in "AB12")
+                while (isdigit(data[i + idx])) idx++;
+                // i ~ (i + idx - 1)의 문자열, 즉 한 셀 주소 토큰(예: "AB12")을 추출
+                exp_vec.push_back(data.substr(i, idx));
+                // i를 idx만큼 증가시켜 중복 처리 방지
+                i += idx;
             }
-            //  숫자(한 자리): 한 글자 숫자를 추출
+            //idx 길이 만큼 추출 
             else if (isdigit(data[i])) {
-                exp_vec.push_back(data.substr(i, 1)); // 숫자 토큰 추출
-                i++;
+                int idx = 0;
+                // 연속된 숫자(상수) 부분 파악 (예: "123")
+                while (isdigit(data[i + idx])) idx++;
+                // i ~ (i + idx - 1)의 연속된 숫자 토큰 추출
+                exp_vec.push_back(data.substr(i, idx));
+                // 이미 추출한 숫자 길이만큼 i 증가
+                i += idx;
             }
             //  여는 괄호((), [], {}): 스택에 push
             else if (data[i] == '(' || data[i] == '[' || data[i] == '{') {
@@ -261,48 +291,121 @@ class ExprCell : public Cell {
 public:
     ExprCell(Table* table, std::string str, int x, int y) :  Cell(table, x, y), data(str) {  parse_expression(); }
 
-    std::string stringify() { return std::to_string(to_numeric()); }
+    // 셀의 값을 문자열로 출력 (에러: 수식+오류 메시지, 정상: 수치값)
+    std::string stringify() {
+        std::set<std::string> visited;           // 순환참조 감지 context
+        int result = to_numeric(visited);        // 수식 계산
+        if (result == 0 && !data.empty())
+            return data + " (순환/오류)";        // 오류거나 순환이면 수식 표시
+        return std::to_string(result);           // 정상 계산 시 숫자만
+    }
 
-    int to_numeric() {
+    // 실제 수식 계산: visited는 순환 검사용, 반환값은 계산 결과
+    int to_numeric(std::set<std::string>& visited) override {
+
         double result = 0;
-        Excel::NumStack stack;  // 계산 과정에서 사용할 스택
+        Excel::Stack stack;   // 수식 계산용 임시 스택 (문자열 저장: 셀, 숫자 등)
 
         // exp_vec에는 파싱된 후위 표기 토큰(피연산자, 연산자)이 차례대로 들어있음
         for (int i = 0; i < exp_vec.size(); i++) {
             std::string str = exp_vec[i];   // i번째 토큰 꺼냄
 
             if (isalpha(str[0]))
-                // 셀 참조(A1, B3 등)인 경우 → 테이블 객체에서 해당 셀 값 계산 후 push
-                stack.push(table->to_numeric(str));
+                // 셀 주소(예: "A1", "B2" 등) → 스택에 그대로 push
+                stack.push(str);
             else if (isdigit(str[0]))
-                // 숫자(예: "13")면 정수로 변환해 push
-                stack.push(atoi(str.c_str()));
-            else {
-                // 연산자인 경우(+, -, *, /)
-                double y = stack.pop(); // 주의: 스택에서 먼저 pop하는 것이 오른쪽(두 번째 피연산자)
-                double x = stack.pop(); // 스택에서 다음으로 pop하는 것이 왼쪽(첫 번째 피연산자)
+                // 숫자 상수(예: "13") → 스택에 그대로 push
+                stack.push(str);
+            else if (str[0] == ':') {
+                //범위 연산자(":") → 두 셀 주소 pop, 범위 내 모든 셀 주소를 다시 push
+                std::string rigth = stack.pop();
+                std::string left = stack.pop();
 
+                // 셀 주소 → (row, col) 좌표 변환
+                int row_1 = atoi(left.c_str() + 1) - 1;
+                int col_1 = left[0] - 'A';
+                int row_2 = atoi(rigth.c_str() + 1) - 1;
+                int col_2 = rigth[0] - 'A';
+
+                // 범위의 모든 셀 주소를 A1~B5 순서로 스택에 push
+                for (int j = std::min(row_1, row_2); j <=std::max(row_1, row_2); j++) {
+                    for (int k = std::min(col_1, col_2); k <= std::max(col_1, col_2); k++) {
+                        std::string addr;
+                        addr += (char)('A' + k);               // 열
+                        addr += std::to_string(j + 1);         // 행 (1-based)
+                        stack.push(addr);                      // 범위 내 셀들 push
+                    }
+                }
+            }
+            //SUM 함수 토큰 : 스택에 남은 모든 값 pop해 실제 값 계산합 후 result 입력  
+            else if (str == "SUM") {
+                while (!stack.is_empty()) {
+                    std::string addr = stack.pop();
+                    result += table->to_numeric(addr, visited);// 셀주소면 실제 값 얻기
+                }
+                stack.push(std::to_string(result)); // 합계 결과를 다시 push
+            }
+            //AVE 함수 토큰 : 스택에 남은 모든 값 pop해 값 합산 후 평균 구하기 
+            else if (str == "AVE") {
+                int count = 0;
+                while (!stack.is_empty()) {
+                    std::string addr = stack.pop();
+                    result += table->to_numeric(addr, visited);
+                    count++;
+                }
+                if (count == 0) stack.push("0"); // 0으로 나누는 예외 방지
+                else stack.push(std::to_string(result / count));
+
+            }
+            //MIN 함수 토큰 : 젤 낮은 값 푸쉬
+            else if (str == "MIN") {
+                double min = table->to_numeric(stack.pop(), visited);
+                while (!stack.is_empty()) {
+                    std::string addr = stack.pop();
+                    double v = table->to_numeric(addr, visited);
+                    if (v < min) min = v;
+                }
+                stack.push(std::to_string(min));
+            }
+            //MAX 함수 토큰 : 젤 높 은 값 푸쉬 
+            else if (str == "MAX") {
+                double max = table->to_numeric(stack.pop(), visited);
+                while (!stack.is_empty()) {
+                    std::string addr = stack.pop();
+                    double v = table->to_numeric(addr, visited);
+                    if (v > max) max = v;
+                }
+                stack.push(std::to_string(max));
+            }
+            else {
+                // 사칙연산 연산자(+, -, *, /)
+                
+                // 스택에서 오른쪽 피연산자(y), 왼쪽 피연산자(x)를 pop한 뒤 실제 값 계산
+                double y = table->to_numeric(stack.pop(), visited); // 오른쪽
+                double x = table->to_numeric(stack.pop(), visited); // 왼쪽
+
+                // 산술 연산 후 결과값을 문자열로 stack에 push
                 switch (str[0])
                 {
-                case '+' :
-                    stack.push(x + y);
+                case '+':
+                    stack.push(std::to_string(x + y));
                     break;
-                case '-' :
-                    stack.push(x - y);
+                case '-':
+                    stack.push(std::to_string(x - y));
                     break;
-                case '*' :
-                    stack.push(x * y);
+                case '*':
+                    stack.push(std::to_string(x * y));
                     break;
-                case '/' :
-                    stack.push(x / y);
+                case '/':
+                    stack.push(std::to_string(x / y));
                     break;
                 }
             }
         }
-        return stack.pop();          // 마지막에 스택에 남는 값이 전체 식의 계산 결과
-    }    
+        // 최종 결과값(스택 top)을 double로 변환하여 반환
+        return std::stod(stack.pop());
+    }
 };
-
 
 // 텍스트 테이블 클래스: 탭/개행으로 구분
 class TextTable : public Table {
@@ -390,24 +493,177 @@ public:
     }
 };
 
+// CSV 테이블 클래스: 쉼표로 구분
+class CSVTable : public Table {
+public:
+    CSVTable(int rows, int cols) : Table(rows, cols) {}
+
+    std::string print_table() override {
+        std::string result = "";
+
+        // 행마다 반복
+        for (int i = 0; i < rows; i++) {
+            // 열마다 반복
+            for (int j = 0; j < cols; j++) {
+                // 첫 번째 열이 아니면 쉼표(,) 추가 (열 구분자 역할)
+                if (j >= 1) result += ",";
+
+                std::string temp;
+                // 셀이 존재하면 문자열로 변환
+                if (data_base[i][j])
+                    temp = data_base[i][j]->stringify();
+
+                // 큰따옴표 내부 이스케이프 처리: " → ""
+                for (int k = 0; k < (int)temp.length(); k++) {
+                    if (temp[k] == '"') {
+                        temp.insert(k, 1, '"'); // 큰따옴표 앞에 추가 삽입
+                        k++;                   // 삽입 후 인덱스 조정
+                    }
+                }
+
+                // 전체 값을 큰따옴표로 감싸기 (CSV 규칙 준수)
+                temp = '"' + temp + '"';
+
+                // 결과 문자열에 추가
+                result += temp;
+            }
+            // 행 끝냈으니 줄바꿈 추가
+            result += "\n";
+        }
+        return result;
+    }
+};
+
+// HTML 테이블 클래스: <table>, <tr>, <td> 태그로 구분
+class HTMLTable : public Table {
+public:
+    // 생성자: Table 객체 초기화
+    HTMLTable(int rows, int cols)
+        : Table(rows, cols) {}
+
+    // 테이블을 HTML 문자열 형식으로 출력
+    std::string print_table() override {
+        std::string result = "<table border='1' cellpadding='10'>"; // 테이블 시작
+
+        // 각 행에 대해 반복
+        for (int i = 0; i < rows; i++) {
+            result += "<tr>";  // 행 시작
+            for (int j = 0; j < cols; j++) {
+                result += "<td>";  // 셀 시작
+
+                // 셀이 존재할 경우 문자열 출력
+                if (data_base[i][j])
+                    result += data_base[i][j]->stringify();
+
+                result += "</td>";  // 셀 종료
+            }
+            result += "</tr>\n";  // 행 종료
+        }
+
+        result += "</table>\n";  // 테이블 종료
+        return result;
+    }
+};
 
 // Table 객체를 스트림에 출력할 수 있도록 하는 연산자 오버로딩
 std::ostream& operator <<(std::ostream& o, Table& t) {
     o << t.print_table();
     return o;
 }
+class ExcelProgram {
+    Table* current_table;    // 현재 사용중인 테이블
+
+public:
+    ExcelProgram(int max_row, int max_col, int choice = 0) {
+        switch (choice)   // 생성자: 테이블 종류(choice)에 따라 객체 생성
+        {
+        case 1:
+            current_table = new TextTable(max_row, max_col);
+            break;
+        case 2:
+            current_table = new HTMLTable(max_row, max_col);
+            break;
+        case 3:
+            current_table = new CSVTable(max_row, max_col);
+            break;
+        }
+    }
+    ~ExcelProgram() {
+        delete current_table;
+    }
+    // 사용자 입력 파싱 및 명령 수행 함수
+    int parse_user_input(std::string str) {
+        int next = 0;                 // 파싱 중 다음 파트를 시작할 위치
+        std::string command = "";     // 명령어 저장 변수
+
+         // 명령어 첫 단어 추출 (공백 전까지)
+        for (int i = 0; i < str.length(); i++) {
+            if (str[i] == ' ') {
+                command = str.substr(0, i);
+                next = i + 1;
+                break;
+            }
+            else if (i == str.length() - 1) {
+                command = str.substr(0, i + 1);
+                next = i + 1;
+                break;
+            }
+        }
+        std::string to = "";     // 셀 위치 파싱 예: "A1"
+
+        for (int i = next; i < str.length(); i++) {
+            if (str[i] == ' ' || i == str.length() - 1) {
+                to = str.substr(next, i - next+1);
+                next = i + 1;
+                break;
+            }
+            else if (i == str.length() - 1) {
+                to = str.substr(0, i + 1);
+                next = i + 1;
+                break;
+            }
+        }
+        // 셀 위치 파싱 (예: "A1" → col: 0, row: 0)
+        int col = to[0] - 'A';                      // 열: 'A'->0, 'B'->1 ...
+        int row = atoi(to.c_str() + 1) - 1;         // 행: "A1"의 1 -> 0번째 라인(0-indexed)
+
+        std::string rest = str.substr(next); // 나머지 문자열(셀에 들어갈 값)
+
+        // 명령 분기 처리: 셀에 값 등록
+        if (command == "sets")
+            current_table->reg_cell(new StringCell(current_table, rest, row, col), row, col); // 문자열 셀
+        else if (command == "setn")
+            current_table->reg_cell(new NumCell(current_table, atoi(rest.c_str()), row, col), row, col); // 숫자 셀
+        else if (command == "sete")
+            current_table->reg_cell(new ExprCell(current_table, rest, row, col), row, col); // 수식 셀
+        else if (command == "setd")
+            current_table->reg_cell(new DateCell(current_table, rest, row, col), row, col); // 날짜 셀
+        else if (command == "exit")
+            return 0; // 종료
+
+        return 1; // 계속
+    }
+
+    // 명령 입력 및 결과 출력 루프
+    void command_line() {
+        std::string str;
+        std::getline(std::cin, str); // 첫 줄 입력
+        while (parse_user_input(str)) { // 명령 해석 후 반복
+            std::cout << *current_table << std::endl << ">>";
+            getline(std::cin, str);
+        }
+    }
+};
 
 int main() {
-    // 텍스트 테이블 생성 및 셀 등록
-    TextTable table(5, 5);
+   
+    std::cout << "테이블 (타입) (최대행크기) (최대 열 크기) 를 입력" << std::endl;
+    std::cout << "*1.Text, 2.HTML, 3.CSV" << std::endl;
 
-    table.reg_cell(new NumCell(&table, 2, 1, 1), 1, 1);   // B2 = 2
-    table.reg_cell(new NumCell(&table, 4, 1, 2), 1, 2);   // B3 = 4
-    table.reg_cell(new NumCell(&table, 3, 2, 1), 2, 1);   // C2 = 3
-    table.reg_cell(new NumCell(&table, 5, 2, 2), 2, 2);   // C3 = 5
-    table.reg_cell(new ExprCell(&table, "B2+B3*(C2+C3-2)", 3, 3), 3, 2);
-    table.reg_cell(new StringCell(&table, "B2+B3*(C2+C3-2)=", 3, 2), 3, 1);
-    std::cout << table << std::endl;
+    int type, max_row, max_col;
+    std::cin >> type >> max_row >> max_col;
+    ExcelProgram e(max_row, max_col, type );
+    e.command_line();
 
 
     return 0;
