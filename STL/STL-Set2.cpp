@@ -16,19 +16,23 @@ class Todo {
 public:
 	Todo(int priority, std::string job_desc) : priority(priority), job_desc(job_desc) {}
 	
+	// TodoCmp 구조체가 Todo의 private 멤버에 접근할 수 있도록 friend 선언
 	friend struct TodoCmp;
 
-	friend std::ostream& operator << (std::ostream& o, const Todo& td);
+
+	friend std::ostream& operator<<(std::ostream& o, const Todo& td);
 };
-struct TodoCmp{
+
+
+// Todo 객체의 정렬 기준을 위한 함수 객체 (비교자)
+struct TodoCmp {
+	// 정렬 기준: 우선순위가 같으면 job_desc 사전순 비교, 아니면 높은 priority 먼저
 	bool operator()(const Todo& t1, const Todo& t2) const {
 		if (t1.priority == t2.priority)
-			return t1.job_desc < t2.job_desc;
-
-		return t1.priority > t2.priority;
+			return t1.job_desc < t2.job_desc; // 사전순 오름차순
+		return t1.priority > t2.priority;     // priority 내림차순 (높은 게 먼저)
 	}
 };
-
 std::ostream& operator<<(std::ostream& o, const Todo& td) {
 	o << "[중요도 " << td.priority << "] " << td.job_desc;
 	return o;

@@ -33,5 +33,20 @@
     <ClCompile Include="STL-Set2.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="STL-Map.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="STL-MultiSet.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="STL-MultiMap.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="STL-Unordered-Set.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="STL-Unordered-Map.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
