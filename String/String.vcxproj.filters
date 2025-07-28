@@ -15,31 +15,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Sort.cpp">
+    <ClCompile Include="Traits.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Partial_Sort.cpp">
+    <ClCompile Include="SSO.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Stable_Sort.cpp">
+    <ClCompile Include="Literal.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Remove.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Remove_if.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Lambda.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Transform.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Find.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Any_of-All_of.cpp">
+    <ClCompile Include="UniCode.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
