@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstring>
 
+// 이동 자체는 move 를 실행함으로써 발생하는 것이 아니라 우측값을 받는 함수들이 오버로딩 되면서 수행 
+
 class MyString {
 	char* string_content;
 	int string_length;
@@ -90,6 +92,7 @@ public:
 	}
 	
 	//복사 대입 연산자 
+	//이동 대입 연산자를 정의 하지않으면 복사 대입 연산자가 실행되며 매우 느린 복사 수행 
 	MyString &operator =(const MyString& s) {
 		std::cout << "복사 " << std::endl;
 
