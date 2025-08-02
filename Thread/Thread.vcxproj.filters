@@ -15,22 +15,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Unique-Ptr.cpp">
+    <ClCompile Include="Callables.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="STL-Unique_ptr.cpp">
+    <ClCompile Include="Func.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="MY-Unique_ptr.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Shared_Ptr.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Weak_Ptr.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Ptr.cpp">
+    <ClCompile Include="Func-this.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
