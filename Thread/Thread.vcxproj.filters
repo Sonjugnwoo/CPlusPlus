@@ -66,5 +66,8 @@
     <ClCompile Include="Spinlock.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="atomic_flag.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

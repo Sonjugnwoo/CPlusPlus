@@ -2,25 +2,21 @@
 #include <atomic>
 #include <iostream>
 
-std::atomic<bool> at;		// false면 잠금 해제 상태, true면 잠금 상태
+std::atomic_flag at;		// atomic_flag는 가장 단순하고 빠른 원자적 락 플래그 타입
 int counter = 0;			// 카운터 자원 
-/*
-  spin_lock()
-  - 플래그가 false일 때 true로 바꾸는데 성공해야 락 획득
-  - 이미 true라면 계속 반복해서 시도(스핀 대기)
-  - busy-wait 중 CPU 점유를 줄이기 위해 잠깐 쉼
- */
-void spin_lock() {
-	bool expected =false;
-	while (!at.compare_exchange_strong(expected, true, std::memory_order_seq_cst)) {
-		expected = false;	  // compare_exchange_strong 실패 시 expected가 at(보통 true)로 덮어써지므로 다시 false로 재설정
 
+void spin_lock() {
+	while (at.test_and_set(std::memory_order_seq_cst)) {
+		// test_and_set(): 현재 값을 읽고 true로 설정한 뒤 이전 값을 반환
+		// - 이전 값이 true면 이미 다른 스레드가 락을 잡고 있는 상태 → 대기
+		// - 이전 값이 false면 락이 풀려있었으므로 이 스레드가 락을 잡음
 		std::this_thread::sleep_for(std::chrono::microseconds(1));	// CPU 낭비 방지용으로 아주 짧게 sleep (microseconds 단위)
-	}	
+	}
 }
 
 void unlock() {
-	at.store(false, std::memory_order_seq_cst);		//at를 false 로 만들어 락 해제 , 다르 ㄴ스레드가 spin_lock 시도 가능 
+	at.clear(std::memory_order_seq_cst);		//at를 false 로 만들어 락 해제 , 다른 스레드가 spin_lock 시도 가능 
+	// clear(): atomic_flag 값을 false로 초기화 → 락 해제
 }
 
 void worker(int id) {	// 각 스레드(1, 2)가 5번씩 counter 증가
