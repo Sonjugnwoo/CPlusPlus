@@ -21,5 +21,17 @@
     <ClCompile Include="Future-Promise.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Future-Promise-cv.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Future-Promise-catch.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="wait_for.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Shared_future.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
