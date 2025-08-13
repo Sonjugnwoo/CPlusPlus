@@ -27,10 +27,22 @@
     <ClCompile Include="Future-Promise-catch.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="wait_for.cpp">
+    <ClCompile Include="Wait_for.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Shared_future.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Packaged_task.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Async.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Async-Find.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="MyThreadPool.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
