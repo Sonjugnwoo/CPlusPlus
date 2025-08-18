@@ -15,37 +15,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Synchronous.cpp">
+    <ClCompile Include="Constexpr.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Future-Promise.cpp">
+    <ClCompile Include="Constexpr-func.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Future-Promise-cv.cpp">
+    <ClCompile Include="Constexpr-Constructor.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Future-Promise-catch.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Wait_for.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Shared_future.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Packaged_task.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Async.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Async-Find.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="MyThreadPool.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="ThreadPool.cpp">
+    <ClCompile Include="If-Constexpr.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
