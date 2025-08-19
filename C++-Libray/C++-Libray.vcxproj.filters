@@ -15,22 +15,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Constexpr.cpp">
+    <ClCompile Include="Static_assert.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Constexpr-func.cpp">
+    <ClCompile Include="SFINAE.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Constexpr-Constructor.cpp">
+    <ClCompile Include="Enable_if.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="If-Constexpr.cpp">
+    <ClCompile Include="Enable_if-func.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Decltype.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Declval.cpp">
+    <ClCompile Include="voit_t.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

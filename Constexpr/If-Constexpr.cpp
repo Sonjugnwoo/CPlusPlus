@@ -1,5 +1,5 @@
 #include <iostream>
-#include<type_traits>
+#include <type_traits>
 
 template <typename T>
 void show_value(T t) {
