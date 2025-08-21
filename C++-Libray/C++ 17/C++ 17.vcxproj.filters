@@ -15,22 +15,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Filesystem.cpp">
+    <ClCompile Include="Optional.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Dir-Path.cpp">
+    <ClCompile Include="Optional-2.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Dir-itr.cpp">
+    <ClCompile Include="Variant.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Dir-create.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Dir-copy.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Dir-remove.cpp">
+    <ClCompile Include="Tuple.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
